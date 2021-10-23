@@ -1,1 +1,1 @@
-"# msql" 
+# MySQL Libaray for golang
