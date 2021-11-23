@@ -32,6 +32,7 @@ func init(){
 	if err != nil {
 		log.Fatal(err)
 	}
+	db.SetMaxOpenConns(1)
 	defer db.Close()
 	log.Println("db connection successful")
 
