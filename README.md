@@ -3,6 +3,9 @@
 ## How do you import in your golang project?
 > go get github.com/mateors/msql
 
+## Import thirdparty database driver according to your needs
+> go get github.com/mattn/go-sqlite3
+
 ## Example code with sqlite3 database
 ```go
 
