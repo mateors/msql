@@ -14,10 +14,11 @@ package main
 import (
   "fmt"
   "log"
-	"database/sql"
- 	"github.com/mateors/msql"
-	_ "github.com/mattn/go-sqlite3"
+  "database/sql"
+  "github.com/mateors/msql"
+  _ "github.com/mattn/go-sqlite3"
 )
+
 var db .*sql.DB
 var err error
 
