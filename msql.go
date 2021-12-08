@@ -208,10 +208,8 @@ func ReadTable2Columns(table string, db *sql.DB) ([]string, error) {
 
 	sql := fmt.Sprintf("SHOW COLUMNS FROM %v;", table)
 	//sql := fmt.Sprintf("PRAGMA table_info(%s);", table)
-
+	
 	rows, err := db.Query(sql)
-
-	//check(err, "read.query")
 	if err != nil {
 		// mysqlerr, _ := err.(*mysql.MySQLError)
 		// if mysqlerr.Number == 1146 {
@@ -235,13 +233,9 @@ func ReadTable2Columns(table string, db *sql.DB) ([]string, error) {
 		if err != nil {
 			fmt.Println("ReadTable2Columns:", err.Error())
 		}
-		//data := fmt.Sprintf("%v,%v,%v,%v,%v,%v = %T", vfield, vtype, vnull, vkey, vdefault, vextra, vdefault)
-		//fmt.Println(data)
-
 		//if vkey != "PRI" { //primary key are generally auto incremented value so we ignore
 		cols = append(cols, vfield)
 		//}
-
 	}
 
 	return cols, nil
@@ -285,19 +279,8 @@ func Finsert(sql string, valAray []string, db *sql.DB) (int64, int64, error) {
 
 		return 0, 0, err
 	}
-	//check(err, "db.Prepare")
+	
 	defer stmt.Close()
-
-	//mr := []string{"Account", "1", "1"}
-
-	//fmt.Fprintf("%v\n", mr)
-
-	//v := []interface{}{"Inventory", "1", "1"}
-	// var names []interface{}
-	// names = append(names, "Report")
-	// names = append(names, "1")
-
-	//vals := []string{"Report", "1", "1"}
 	v := make([]interface{}, len(valAray))
 	for i, val := range valAray {
 		v[i] = val
@@ -305,11 +288,6 @@ func Finsert(sql string, valAray []string, db *sql.DB) (int64, int64, error) {
 
 	res, err := stmt.Exec(v...) //"Inventory", "1", "1"
 	if err != nil {
-
-		//log.Fatal(err)
-		//panic(err)
-		//mysqlerr, _ := err.(*mysql.MySQLError)
-		//fmt.Fprintln(w, "EROR::", mysqlerr.Number, mysqlerr.Message) //Error 1062: Duplicate entry 'Report' for key 'module_name'
 		return 0, 0, err
 	}
 
@@ -328,14 +306,6 @@ func UpdateByValAray(sql string, valAray []string, db *sql.DB) (rowsAfftected in
 	}
 
 	defer stmt.Close()
-	//mr := []string{"Account", "1", "1"}
-	//fmt.Fprintf("%v\n", mr)
-	//v := []interface{}{"Inventory", "1", "1"}
-	// var names []interface{}
-	// names = append(names, "Report")
-	// names = append(names, "1")
-	//vals := []string{"Report", "1", "1"}
-
 	v := make([]interface{}, len(valAray))
 	for i, val := range valAray {
 		v[i] = val
@@ -415,12 +385,10 @@ func UpdateQueryBuilder(keyVal []string, tableName string, whereCondition string
 	var fields string
 
 	for _, v := range keyVal {
-
 		fields += fmt.Sprintf("`%v`=?, ", v)
 	}
 
 	fmt.Fprintf(sb, "UPDATE `%v` SET %v WHERE %v;", tableName, strings.TrimRight(fields, ", "), whereCondition)
-
 	sql = sb.String()
 	return
 }
@@ -430,15 +398,11 @@ func FieldByValue(table, fieldName, where string, db *sql.DB) string {
 
 	sql := fmt.Sprintf("SELECT %v FROM `%v` WHERE %v;", fieldName, table, where)
 	rows := db.QueryRow(sql)
-
 	var vfield string
 	err := rows.Scan(&vfield)
 	if err != nil {
 		return vfield
 	}
-
-	//data := fmt.Sprintf("%v = %T", vcnt, vcnt)
-	//fmt.Println(data)
 	return vfield
 }
 
@@ -500,9 +464,7 @@ func GetAllRowsByQuery(sql string, db *sql.DB) ([]map[string]interface{}, error)
 
 	rc := newMapStringScan(columnNames)
 	tableData := make([]map[string]interface{}, 0)
-	//fmt.Println(rc.row)
-
-	//var i = 0
+	
 	for rows.Next() {
 
 		err := rc.Update(rows)
@@ -514,23 +476,11 @@ func GetAllRowsByQuery(sql string, db *sql.DB) ([]map[string]interface{}, error)
 		cv := rc.Get()
 		dd := make(map[string]interface{})
 		for _, col := range columnNames {
-
-			//fmt.Println(col)
 			dd[col] = cv[col]
-
 		}
-
-		//fmt.Println(dd)
 		tableData = append(tableData, dd)
-		//i++
-
 	}
-
-	//fmt.Println(len(tableData))
-	//fmt.Println(tableData)
-
 	return tableData, nil
-
 }
 
 func InsertUpdate(form url.Values, db *sql.DB) string {
@@ -540,7 +490,6 @@ func InsertUpdate(form url.Values, db *sql.DB) string {
 	todo := form.Get("todo")
 	tableName := form.Get("table")
 	primary_key_field := form.Get("pkfield") //
-	//fmt.Println("InsertUpdateProcess>", form)
 
 	if todo == "" {
 		errortxt := "TODO missing"
@@ -553,8 +502,7 @@ func InsertUpdate(form url.Values, db *sql.DB) string {
 	}
 
 	keyAray, valAray := Form2KeyValueSlice(form, dbColList)
-
-	var log_action string
+	
 	if todo == "update" {
 		whereCondition := fmt.Sprintf("%s='%v'", primary_key_field, id)
 		sql := UpdateQueryBuilder(keyAray, tableName, whereCondition)
@@ -565,8 +513,7 @@ func InsertUpdate(form url.Values, db *sql.DB) string {
 			return message
 		}
 		message = "OK"
-		log_action = "updated by"
-
+		
 	} else if todo == "insert" {
 
 		sql := InsertQueryBuilder(keyAray, tableName)
@@ -577,7 +524,6 @@ func InsertUpdate(form url.Values, db *sql.DB) string {
 		}
 		message = "OK"
 		id = strconv.FormatInt(lrid, 10)
-		log_action = "created by"
 	}
 	return message
 }
