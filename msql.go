@@ -136,19 +136,12 @@ func InsertIntoAnyTable(tableInfo url.Values, db *sql.DB) (primarykeyValue int64
 	}
 
 	if err != nil {
-		//fmt.Println("dbColList: ", dbColList, "ERROR:>>>>", err)
 		return 0, err
 	}
 
 	keyList, valList := Form2KeyValueSlice(tableInfo, dbColList)
-	//fmt.Println("keyList: ", keyList)
-	//fmt.Println("valList: ", valList)
-
 	sql := InsertQueryBuilder(keyList, table)
-	//fmt.Println("sql: ", sql)
-	//fmt.Println("valList: ", valList)
 	primarykeyValue, _, err = Finsert(sql, valList, db)
-
 	return
 }
 
@@ -163,10 +156,8 @@ func ReadTable2ColumnSqlit3Trx(table string, trx *sql.Tx) ([]string, error) {
 	defer rows.Close()
 	var dflt_value *string
 	var cid, name, vtype, notnull, pk string
-
-	//cols := make(map[string]string)
+	
 	cols := []string{}
-
 	for rows.Next() {
 		err = rows.Scan(&cid, &name, &vtype, &notnull, &dflt_value, &pk)
 		if err != nil {
@@ -189,10 +180,8 @@ func ReadTable2ColumnSqlit3(table string, db *sql.DB) ([]string, error) {
 	defer rows.Close()
 	var dflt_value *string
 	var cid, name, vtype, notnull, pk string
-
-	//cols := make(map[string]string)
+	
 	cols := []string{}
-
 	for rows.Next() {
 		err = rows.Scan(&cid, &name, &vtype, &notnull, &dflt_value, &pk)
 		if err != nil {
@@ -207,39 +196,25 @@ func ReadTable2ColumnSqlit3(table string, db *sql.DB) ([]string, error) {
 func ReadTable2Columns(table string, db *sql.DB) ([]string, error) {
 
 	sql := fmt.Sprintf("SHOW COLUMNS FROM %v;", table)
-	//sql := fmt.Sprintf("PRAGMA table_info(%s);", table)
-	
 	rows, err := db.Query(sql)
 	if err != nil {
-		// mysqlerr, _ := err.(*mysql.MySQLError)
-		// if mysqlerr.Number == 1146 {
-		// 	return nil, mysqlerr
-		// }
-		//Error 1146: Table 'gregfins_system.modules' doesn't exist
 		return nil, err
 	}
 
 	defer rows.Close()
-
 	//sql.NullString
 	var vfield, vtype, vnull, vkey, vextra string
 	var vdefault *string
 
-	//cols := make(map[string]string)
 	cols := []string{}
-
 	for rows.Next() {
 		err = rows.Scan(&vfield, &vtype, &vnull, &vkey, &vdefault, &vextra)
 		if err != nil {
-			fmt.Println("ReadTable2Columns:", err.Error())
+			return nil,err
 		}
-		//if vkey != "PRI" { //primary key are generally auto incremented value so we ignore
 		cols = append(cols, vfield)
-		//}
 	}
-
 	return cols, nil
-
 }
 
 //Finsert Insert using sql query, return LastInsertId,RowsAffected, Error
@@ -256,7 +231,7 @@ func FinsertTrx(sql string, valAray []string, trx *sql.Tx) (int64, int64, error)
 		v[i] = val
 	}
 
-	res, err := stmt.Exec(v...) //"Inventory", "1", "1"
+	res, err := stmt.Exec(v...)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -286,7 +261,7 @@ func Finsert(sql string, valAray []string, db *sql.DB) (int64, int64, error) {
 		v[i] = val
 	}
 
-	res, err := stmt.Exec(v...) //"Inventory", "1", "1"
+	res, err := stmt.Exec(v...)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -311,16 +286,12 @@ func UpdateByValAray(sql string, valAray []string, db *sql.DB) (rowsAfftected in
 		v[i] = val
 	}
 
-	res, err := stmt.Exec(v...) //"Inventory", "1", "1"
+	res, err := stmt.Exec(v...)
 	if err != nil {
 		return 0, err
 	}
-
-	//lrid, _ := res.LastInsertId()
 	rowsAfftected, _ = res.RowsAffected()
-
 	return
-
 }
 
 //Form2KeyValueSlice Set form value and Get keyList, valueList separately
@@ -333,8 +304,7 @@ func Form2KeyValueSlice(form map[string][]string, colList []string) (keyList []s
 	}
 
 	for _, colName := range colList {
-
-		//fmt.Printf("%v \n", colName)
+		
 		var cval = ""
 		if colval, ok := fmap[colName]; ok {
 			//fmt.Printf("%v-> %v exist value = %v\n", i, colName, colval)
@@ -347,7 +317,6 @@ func Form2KeyValueSlice(form map[string][]string, colList []string) (keyList []s
 			keyList = append(keyList, colName)
 			valList = append(valList, cval)
 		}
-
 	}
 	return
 }
@@ -356,7 +325,6 @@ func Form2KeyValueSlice(form map[string][]string, colList []string) (keyList []s
 func InsertQueryBuilder(keyVal []string, tableName string) string {
 
 	sb := &strings.Builder{}
-	//fmt.Fprintf(sb, "INSERT INTO `%v` (", tableName)
 	fields := ""
 	vals := ""
 
@@ -431,9 +399,7 @@ func RawSQL(sql string, db *sql.DB) bool {
 	if n > 0 {
 		return true
 	}
-
 	return false
-
 }
 
 //CheckCount Get row count using where condition
@@ -441,13 +407,10 @@ func CheckCount(table, where string, db *sql.DB) (count int64) {
 
 	sql := fmt.Sprintf("SELECT count(*)as cnt FROM %v WHERE %v;", table, where)
 	rows := db.QueryRow(sql)
-
-	//var count int64
 	err := rows.Scan(&count)
 	if err != nil {
 		fmt.Println("CheckCount:", err.Error())
 	}
-
 	return
 }
 
