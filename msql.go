@@ -126,12 +126,15 @@ func rowMapString(columnNames []string, rows *sql.Rows) (map[string]string, erro
 func InsertIntoAnyTable(tableInfo url.Values, db *sql.DB) (primarykeyValue int64, err error) {
 
 	table := tableInfo.Get("table")
-	// fmt.Println("TABLE", table)
-	// fmt.Println("")
-	// fmt.Println("")
-	// fmt.Println("tableInfo: ", tableInfo)
+	dbtype := tableInfo.Get("dbtype")
 
-	dbColList, err := ReadTable2Columns(table, db)
+	var dbColList []string
+	if dbtype == "sqlite3" {
+		dbColList, err = ReadTable2ColumnSqlit3(table, db)
+	} else {
+		dbColList, err = ReadTable2Columns(table, db)
+	}
+
 	if err != nil {
 		//fmt.Println("dbColList: ", dbColList, "ERROR:>>>>", err)
 		return 0, err
@@ -149,10 +152,63 @@ func InsertIntoAnyTable(tableInfo url.Values, db *sql.DB) (primarykeyValue int64
 	return
 }
 
+func ReadTable2ColumnSqlit3Trx(table string, trx *sql.Tx) ([]string, error) {
+
+	sql := fmt.Sprintf("PRAGMA table_info(%s);", table)
+	rows, err := trx.Query(sql)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	var dflt_value *string
+	var cid, name, vtype, notnull, pk string
+
+	//cols := make(map[string]string)
+	cols := []string{}
+
+	for rows.Next() {
+		err = rows.Scan(&cid, &name, &vtype, &notnull, &dflt_value, &pk)
+		if err != nil {
+			fmt.Println("ReadTable2Columnsqlite3:", err.Error())
+		}
+		cols = append(cols, name)
+	}
+	return cols, nil
+}
+
+//ReadTable2Columns Get table all columns as a slice of string
+func ReadTable2ColumnSqlit3(table string, db *sql.DB) ([]string, error) {
+
+	sql := fmt.Sprintf("PRAGMA table_info(%s);", table)
+	rows, err := db.Query(sql)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	var dflt_value *string
+	var cid, name, vtype, notnull, pk string
+
+	//cols := make(map[string]string)
+	cols := []string{}
+
+	for rows.Next() {
+		err = rows.Scan(&cid, &name, &vtype, &notnull, &dflt_value, &pk)
+		if err != nil {
+			fmt.Println("ReadTable2Columnsqlite3:", err.Error())
+		}
+		cols = append(cols, name)
+	}
+	return cols, nil
+}
+
 //ReadTable2Columns Get table all columns as a slice of string
 func ReadTable2Columns(table string, db *sql.DB) ([]string, error) {
 
 	sql := fmt.Sprintf("SHOW COLUMNS FROM %v;", table)
+	//sql := fmt.Sprintf("PRAGMA table_info(%s);", table)
+
 	rows, err := db.Query(sql)
 
 	//check(err, "read.query")
@@ -190,6 +246,35 @@ func ReadTable2Columns(table string, db *sql.DB) ([]string, error) {
 
 	return cols, nil
 
+}
+
+//Finsert Insert using sql query, return LastInsertId,RowsAffected, Error
+func FinsertTrx(sql string, valAray []string, trx *sql.Tx) (int64, int64, error) {
+
+	stmt, err := trx.Prepare(sql)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	defer stmt.Close()
+	v := make([]interface{}, len(valAray))
+	for i, val := range valAray {
+		v[i] = val
+	}
+
+	res, err := stmt.Exec(v...) //"Inventory", "1", "1"
+	if err != nil {
+		return 0, 0, err
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		return 0, 0, err
+	}
+
+	lrid, _ := res.LastInsertId()
+	lcount, _ := res.RowsAffected()
+	return lrid, lcount, nil
 }
 
 //Finsert Insert using sql query, return LastInsertId,RowsAffected, Error
