@@ -489,7 +489,7 @@ func InsertUpdate(form url.Values, db *sql.DB) string {
 	id := form.Get("id") //if update
 	todo := form.Get("todo")
 	tableName := form.Get("table")
-	primary_key_field := form.Get("pkfield") //
+	primaryKeyField := form.Get("pkfield") //
 
 	if todo == "" {
 		errortxt := "TODO missing"
@@ -504,7 +504,7 @@ func InsertUpdate(form url.Values, db *sql.DB) string {
 	keyAray, valAray := Form2KeyValueSlice(form, dbColList)
 	
 	if todo == "update" {
-		whereCondition := fmt.Sprintf("%s='%v'", primary_key_field, id)
+		whereCondition := fmt.Sprintf("%s='%v'", primaryKeyField, id) //if always id then we may avoid it
 		sql := UpdateQueryBuilder(keyAray, tableName, whereCondition)
 
 		_, err = UpdateByValAray(sql, valAray, db)
