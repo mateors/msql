@@ -532,3 +532,52 @@ func GetAllRowsByQuery(sql string, db *sql.DB) ([]map[string]interface{}, error)
 	return tableData, nil
 
 }
+
+func InsertUpdate(form url.Values, db *sql.DB) string {
+
+	var message string
+	id := form.Get("id") //if update
+	todo := form.Get("todo")
+	tableName := form.Get("table")
+	primary_key_field := form.Get("pkfield") //
+	//fmt.Println("InsertUpdateProcess>", form)
+
+	if todo == "" {
+		errortxt := "TODO missing"
+		return errortxt
+	}
+
+	dbColList, err := ReadTable2Columns(tableName, db)
+	if err != nil {
+		return err.Error()
+	}
+
+	keyAray, valAray := Form2KeyValueSlice(form, dbColList)
+
+	var log_action string
+	if todo == "update" {
+		whereCondition := fmt.Sprintf("%s='%v'", primary_key_field, id)
+		sql := UpdateQueryBuilder(keyAray, tableName, whereCondition)
+
+		_, err = UpdateByValAray(sql, valAray, db)
+		if err != nil {
+			message = err.Error()
+			return message
+		}
+		message = "OK"
+		log_action = "updated by"
+
+	} else if todo == "insert" {
+
+		sql := InsertQueryBuilder(keyAray, tableName)
+		lrid, _, err := Finsert(sql, valAray, db)
+		if err != nil {
+			message = err.Error()
+			return message
+		}
+		message = "OK"
+		id = strconv.FormatInt(lrid, 10)
+		log_action = "created by"
+	}
+	return message
+}
