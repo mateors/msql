@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"strconv"
 )
 
 type stringStringScan struct {
