@@ -196,7 +196,7 @@ func ReadTable2ColumnSqlit3(table string, db *sql.DB) ([]string, error) {
 //ReadTable2Columns Get table all columns as a slice of string
 func ReadTable2Columns(table string, db *sql.DB) ([]string, error) {
 
-	sql := fmt.Sprintf("SHOW COLUMNS FROM %v;", table)
+	sql := fmt.Sprintf("SHOW COLUMNS FROM `%v`;", table)
 	rows, err := db.Query(sql)
 	if err != nil {
 		return nil, err
